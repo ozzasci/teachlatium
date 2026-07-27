@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latince Öğreniyorum | Etkileşimli Sözlük</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <div class="header-controls">
+            <button id="themeToggle" class="icon-btn" title="Gece/Gündüz Modu">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+        
+        <div class="header-content">
+<!-- Kullanıcı Profil / Karşılama Alanı -->
+<div id="userProfileSection" class="user-profile-bar" style="display: none;">
+    <div id="userAvatarDisplay" class="user-avatar-icon" title="Avatarını Değiştir">
+        <i class="fas fa-user-circle"></i>
+    </div>
+    <span>Merhaba, <strong id="userNameDisplay">Kullanıcı</strong></span>
+    <button id="changeNameBtn" class="wotd-action-btn" title="Profili Düzenle"><i class="fas fa-pen"></i> Düzenle</button>
+</div>
+            <h1><i class="fas fa-landmark"></i> Latince Öğreniyorum</h1>
+            <p>Antik Roma'nın Kadim Bilgeliği ve Deyimleri</p>
+            
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Latince bir deyiş veya Türkçe bir kelime ara...">
+            </div>
+
+            <!-- Günün Deyimi Kutucuğu -->
+            <div id="wordOfTheDay" class="wotd-container">
+                <div class="wotd-card">
+                    <div class="wotd-header">
+                        <span><i class="fas fa-star"></i> Günün Bilgeliği</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="wotdCategory" class="category-tag">Tarih</span>
+                            <button id="wotdCopyBtn" class="wotd-action-btn" title="Kopyala"><i class="fas fa-copy"></i> Kopyala</button>
+                        </div>
+                    </div>
+                    <div class="wotd-content">
+                        <h2 id="wotdLatin">Alea iacta est</h2>
+                        <p id="wotdMeaning">Zar atıldı</p>
+                        <small id="wotdNote"><i class="fas fa-info-circle"></i> Jül Sezar'ın M.Ö. 49'da...</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kategori ve Filtreleme Butonları -->
+            <div class="filter-container">
+                <button class="filter-btn active" data-filter="all">Tümü</button>
+                <button class="filter-btn" data-filter="favorites"><i class="fas fa-heart"></i> Favorilerim</button>
+                <button class="filter-btn" data-filter="tarih">Tarih</button>
+                <button class="filter-btn" data-filter="hukuk">Hukuk</button>
+                <button class="filter-btn" data-filter="felsefe">Felsefe</button>
+                <button class="filter-btn" data-filter="quiz"><i class="fas fa-question-circle"></i> Quiz Modu</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="stats">
+            <p>Toplam <span id="countDisplay">0</span> deyim listeleniyor.</p>
+        </div>
+        
+        <!-- Flashcard'ların yükleneceği alan -->
+        <div id="phraseList" class="phrase-grid">
+            <!-- Kartlar JavaScript ile otomatik üretilecek -->
+        </div>
+
+        <!-- Test / Quiz Alanı (Başlangıçta gizli) -->
+        <div id="quizContainer" class="quiz-container" style="display: none;">
+            <div class="quiz-card">
+                <div class="quiz-header">
+                    <span>Soru <span id="currentQuestionNum">1</span> / 10</span>
+                    <span>Puan: <span id="quizScore">0</span></span>
+                </div>
+                <div class="quiz-body">
+                    <h3 id="quizQuestionText">Latince deyimin anlamı nedir?</h3>
+                    <div id="quizOptions" class="options-grid">
+                        <!-- Şıklar JS ile dinamik eklenecek -->
+                    </div>
+                </div>
+                <button id="nextQuestionBtn" class="filter-btn active" style="margin-top: 20px; width: 100%; display: none;">Sonraki Soru</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Latince Öğreniyorum Sözlüğü & Arşivi</p>
+    </footer>
+
+    <!-- Veritabanı ve Ana JS Dosyaları -->
+    <script src="database.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
