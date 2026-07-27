@@ -1,5 +1,5 @@
-// Latince Deyimler Veritabanı
-const data = {
+// --- 1. VERİTABANI ---
+const database = {
   "latin_phrases": [
     { "phrase": "Ab initio", "meaning": "Başlangıçtan itibaren" },
     { "phrase": "Abundat dulcibus vitiis", "meaning": "Tatlı kusurlarla doludur" },
@@ -1029,52 +1029,212 @@ const data = {
   ]
 };
 
-// DOM Elemanları
+// --- OTOMATİK KATEGORİ BELİRLEME FONKSİYONU ---
+function autoAssignCategory(phrase, meaning) {
+    const text = (phrase + " " + meaning).toLowerCase();
+
+    const hukukKeywords = ["yasa", "kanun", "suç", "hakim", "mahkeme", "hukuk", "sanık", "ceza", "dava", "sözleşme", "mülkiyet", "ab initio", "kısas"];
+    const felsefeKeywords = ["düşünce", "felsefe", "akıl", "ruh", "erdem", "varlık", "bilgi", "gerçek", "mantık", "cogito", "anlam", "yaşam"];
+    const tarihKeywords = ["sezar", "roma", "savaş", "imparator", "kral", "tarih", "m.ö.", "m.s.", "zafer", "asker", "alea iacta est", "oyun bitti"];
+
+    if (hukukKeywords.some(keyword => text.includes(keyword))) {
+        return "hukuk";
+    } else if (felsefeKeywords.some(keyword => text.includes(keyword))) {
+        return "felsefe";
+    } else if (tarihKeywords.some(keyword => text.includes(keyword))) {
+        return "tarih";
+    } else {
+        return "genel";
+    }
+}
+
+// Veritabanını formatlıyoruz (Doğru diziye ulaşıyoruz ve otomatik kategori atıyoruz)
+const data = database.latin_phrases.map(item => ({
+    ...item,
+    category: autoAssignCategory(item.phrase, item.meaning)
+}));
+
+// --- 2. GLOBAL DEĞİŞKENLER & DOM ELEMENTLERİ ---
+let favorites = JSON.parse(localStorage.getItem('latin_favorites')) || [];
+let currentCategory = 'all';
+let searchQuery = '';
+
 const phraseList = document.getElementById('phraseList');
 const searchInput = document.getElementById('searchInput');
 const countDisplay = document.getElementById('countDisplay');
+const themeToggle = document.getElementById('themeToggle');
+const filterBtns = document.querySelectorAll('.filter-btn');
 
-// Ekrana Kartları Çizme Fonksiyonu
+// --- 3. GECE / GÜNDÜZ MODU (THEME) İŞLEMLERİ ---
+function initTheme() {
+    const savedTheme = localStorage.getItem('latin_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('latin_theme', newTheme);
+    updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+    if (!themeToggle) return;
+    const icon = themeToggle.querySelector('i');
+    if (theme === 'dark') {
+        icon.className = 'fas fa-sun';
+        icon.style.color = '#f1c40f';
+    } else {
+        icon.className = 'fas fa-moon';
+        icon.style.color = '#fff';
+    }
+}
+
+if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+}
+
+// --- 4. FAVORİ İŞLEMLERİ ---
+function toggleFavorite(phrase, btnElement) {
+    const index = favorites.indexOf(phrase);
+    
+    if (index === -1) {
+        favorites.push(phrase);
+    } else {
+        favorites.splice(index, 1);
+    }
+    
+    localStorage.setItem('latin_favorites', JSON.stringify(favorites));
+
+    if (currentCategory === 'favorites') {
+        applyFilters();
+    } else {
+        const icon = btnElement.querySelector('i');
+        if (favorites.includes(phrase)) {
+            btnElement.classList.add('active');
+            icon.className = 'fas fa-heart';
+        } else {
+            btnElement.classList.remove('active');
+            icon.className = 'far fa-heart';
+        }
+    }
+}
+
+// --- 5. KARTLARI EKRANA ÇİZME ---
 function renderPhrases(phrases) {
+    if (!phraseList) return;
     phraseList.innerHTML = '';
-    countDisplay.textContent = phrases.length;
+    if (countDisplay) countDisplay.textContent = phrases.length;
 
     if (phrases.length === 0) {
-        phraseList.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #6c757d; font-size: 1.2rem;">Aradığınız kriterlere uygun deyim bulunamadı.</p>';
+        phraseList.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: var(--text-light); font-size: 1.2rem; padding: 2rem;">Aradığınız kriterlere uygun deyim bulunamadı.</p>';
         return;
     }
 
     phrases.forEach(item => {
+        const isFav = favorites.includes(item.phrase);
+        const favIconClass = isFav ? 'fas fa-heart' : 'far fa-heart';
+        const favBtnClass = isFav ? 'fav-btn active' : 'fav-btn';
+        
+        const displayCategory = item.category.charAt(0).toUpperCase() + item.category.slice(1);
+        
         const card = document.createElement('div');
         card.className = 'phrase-card';
+        
         card.innerHTML = `
-            <div class="latin-text">${item.phrase}</div>
-            <div class="turkish-text">${item.meaning}</div>
+            <div class="card-inner">
+                <div class="card-front">
+                    <button class="${favBtnClass}" data-phrase="${item.phrase}" title="Favorilere Ekle/Çıkar">
+                        <i class="${favIconClass}"></i>
+                    </button>
+                    ${item.category !== 'genel' ? `<span class="category-tag">${displayCategory}</span>` : ''}
+                    <div class="latin-text">${item.phrase}</div>
+                    <div class="hint-text">Anlamını görmek için dokun</div>
+                </div>
+                
+                <div class="card-back">
+                    <button class="${favBtnClass}" data-phrase="${item.phrase}" title="Favorilere Ekle/Çıkar">
+                        <i class="${favIconClass}"></i>
+                    </button>
+                    <div class="turkish-text">${item.meaning}</div>
+                    ${item.historyNote ? `
+                        <div class="history-note">
+                            <i class="fas fa-info-circle"></i> ${item.historyNote}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
         `;
+
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('.fav-btn')) return;
+            card.classList.toggle('flipped');
+        });
+
+        const favBtns = card.querySelectorAll('.fav-btn');
+        favBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleFavorite(item.phrase, btn);
+                
+                favBtns.forEach(b => {
+                    const i = b.querySelector('i');
+                    if (favorites.includes(item.phrase)) {
+                        b.classList.add('active');
+                        i.className = 'fas fa-heart';
+                    } else {
+                        b.classList.remove('active');
+                        i.className = 'far fa-heart';
+                    }
+                });
+            });
+        });
+
         phraseList.appendChild(card);
     });
 }
 
-// Arama Filtresi Dinleyicisi
-searchInput.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    
-    // Hem Latince kelimelerde hem de Türkçe anlamlarda arama yapar
-    const filtered = data.latin_phrases.filter(item => 
-        item.phrase.toLowerCase().includes(query) || 
-        item.meaning.toLowerCase().includes(query)
-    );
-    
-    renderPhrases(filtered);
+// --- 6. FİLTRELEME VE ARAMA ---
+function applyFilters() {
+    let filteredData = data;
+
+    if (currentCategory === 'favorites') {
+        filteredData = filteredData.filter(item => favorites.includes(item.phrase));
+    } else if (currentCategory !== 'all') {
+        filteredData = filteredData.filter(item => item.category === currentCategory);
+    }
+
+    if (searchQuery) {
+        filteredData = filteredData.filter(item => 
+            item.phrase.toLowerCase().includes(searchQuery) || 
+            item.meaning.toLowerCase().includes(searchQuery)
+        );
+    }
+
+    renderPhrases(filteredData);
+}
+
+if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        applyFilters();
+    });
+}
+
+filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCategory = btn.getAttribute('data-filter');
+        applyFilters();
+    });
 });
 
-// Sayfa yüklendiğinde tüm deyimleri listele
+// --- 7. BAŞLATMA ---
 window.addEventListener('DOMContentLoaded', () => {
-    // Listede tekrar eden (duplicate) aynı deyimler varsa tekilleştirelim (opsiyonel temizlik)
-    const uniquePhrases = Array.from(new Set(data.latin_phrases.map(a => a.phrase)))
-        .map(phrase => {
-            return data.latin_phrases.find(a => a.phrase === phrase)
-        });
-        
-    renderPhrases(uniquePhrases);
+    initTheme();
+    applyFilters();
 });
